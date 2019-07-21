@@ -18,10 +18,8 @@ class GameOfLife:
     def __init__(self):
         self.initMethods = {
             'random': self.fill_grid_random,
-            'shape1': self.fill_grid_shape1,
-            'shape2': self.fill_grid_shape2,
-            'checkerboard1': self.fill_grid_checkerboard1,
-            'checkerboard2': self.fill_grid_checkerboard2
+            'shape': self.fill_grid_shape,
+            'checkerboard': self.fill_grid_checkerboard
         }
         self.initialized = False
         self.gridWidth = 0
@@ -34,6 +32,7 @@ class GameOfLife:
         self.wrap = False
         self.lastCalculationTime = 0.0
         self.initMethod = ''
+        self.fillshape = ''
         self.grid = []
 
     def init(self, settings):
@@ -49,6 +48,7 @@ class GameOfLife:
         self.seed = settings['randomseed']
         self.wrap = settings['wrap']
         self.lastCalculationTime = 0.0
+        self.fillshape = settings['fillshape']
         self.grid = GameOfLife.new_grid(self.gridWidth, self.gridHeight)
         self.initialized = True
 
@@ -133,33 +133,20 @@ class GameOfLife:
             self.set_cell((x, y - 1), True)
             self.set_cell((x + 1, y - 1), True)
 
-
-    def fill_grid_shape1(self):
+    def fill_grid_shape(self):
         """Put double U shape in center of grid
         """
-        self.draw_shape((self.gridWidth / 2, self.gridHeight / 2), 'double-u')
+        self.draw_shape(
+            (self.gridWidth / 2, self.gridHeight / 2), self.fillshape)
 
-    def fill_grid_shape2(self):
-        """Put r-Pentomino in center of grid
-        """
-        self.draw_shape((self.gridWidth / 2, self.gridHeight / 2), 'r-pentomino')
-
-    def fill_grid_checkerboard1(self):
+    def fill_grid_checkerboard(self, size=1):
         """Fill grid with small checkers
         """
         for y in range(0, self.gridHeight):
             for x in range(0, self.gridWidth):
                 cellIndex = self.coord_to_index((x, y))
-                self.grid[cellIndex] = True if (cellIndex % 2 == 0) else False
-
-    def fill_grid_checkerboard2(self):
-        """Fill grid with large checkers
-        """
-        for y in range(0, self.gridHeight):
-            for x in range(0, self.gridWidth):
-                cellIndex = self.coord_to_index((x, y))
                 self.grid[cellIndex] = True if (
-                    (cellIndex / 3) % 2 == 0) else False
+                    (cellIndex / size) % 2 == 0) else False
 
     def fill_grid(self):
         """Fill the grid using one of the available methods
@@ -267,7 +254,8 @@ class GameOfLife:
               ('Init method: ' + self.initMethod).ljust(HUD_COL_WIDTH) +
               (('Seed: ' + (str(self.seed) if self.seed != 0 else '(random)')).ljust(HUD_COL_WIDTH) if self.initMethod == 'random' else '') +
               (('Threshold: ' + str(self.randomThreshold)).ljust(HUD_COL_WIDTH) if self.initMethod == 'random' else '') +
-              ('Calc time: ' + '{:0.4f}'.format(self.lastCalculationTime) + ' sec').ljust(HUD_COL_WIDTH)
+              ('Calc time: ' +
+               '{:0.4f}'.format(self.lastCalculationTime) + ' sec').ljust(HUD_COL_WIDTH)
               )
         print('\nPress CTRL+C to quit!')
 
@@ -280,7 +268,8 @@ class GameOfLife:
             if pauseInterval and (self.generation % pauseInterval == 0):
                 GameOfLife.clear_screen()
                 self.draw()
-                res = raw_input('Reached generation ' + str(self.generation) + '. Stop [enter], do another ' + str(pauseInterval) + ' [n], or continue forever [c]? [y/n] ').lower()
+                res = raw_input('Reached generation ' + str(self.generation) + '. Stop [enter], do another ' + str(
+                    pauseInterval) + ' [n], or continue forever [c]? [y/n] ').lower()
                 if res == 'y':
                     return
                 if res == 'c':
@@ -304,20 +293,29 @@ class GameOfLife:
 
 def setup_options():
     parser = optparse.OptionParser()
-    parser.add_option('-r', '--resolution', type='int', dest='resolution', nargs=2,
-                      help='Grid resolution', default=(DEFAULT_GRID_WIDTH, DEFAULT_GRID_HEIGHT), metavar='WIDTH HEIGHT')
-    parser.add_option('-m', '--method', type='str', dest='initmethod',
-                      help='Method of grid initialization ("random", "shape1", "shape2", "checkerboard1", "checkerboard2")', default='random')
-    parser.add_option('-f', '--fps', type='int', dest='fps',
-                      help='Frames per second', default=DEFAULT_FPS)
-    parser.add_option('-s', '--seed', type='int', dest='randomseed',
-                      help='Random seed', default=0, metavar='SEED')
-    parser.add_option('-i', '--interval', type='int',
-                      dest='interval', help='Pause every n generations', default=0)
-    parser.add_option('-t', '--threshold', type='float', dest='randomthreshold',
-                      help='Cell threshold for random initialization', default=0.5, metavar='THRESHOLD')
-    parser.add_option('-w', '--wrap', action='store_true', dest='wrap',
-                      help='Set to for torodial space', default=False)
+    optGroup = optparse.OptionGroup(
+        parser, 'General options', 'Options for the simulation engine')
+    optGroup.add_option('-r', '--resolution', type='int', dest='resolution', nargs=2,
+                        help='Grid resolution', default=(DEFAULT_GRID_WIDTH, DEFAULT_GRID_HEIGHT), metavar='WIDTH HEIGHT')
+    optGroup.add_option('-f', '--fps', type='int', dest='fps',
+                        help='Frames per second', default=DEFAULT_FPS)
+    optGroup.add_option('-i', '--interval', type='int',
+                        dest='interval', help='Pause every n generations', default=0)
+    optGroup.add_option('-w', '--wrap', action='store_true', dest='wrap',
+                        help='Set to for torodial space', default=False)
+    parser.add_option_group(optGroup)
+    optGroup = optparse.OptionGroup(
+        parser, 'Fill options', 'Options for grid initialization')
+    optGroup.add_option('-m', '--method', type='str', dest='initmethod',
+                        help='Method of grid initialization ("random", "shape", "checkerboard")', default='random')
+    optGroup.add_option('-s', '--seed', type='int', dest='randomseed',
+                        help='Random seed', default=0, metavar='SEED')
+    optGroup.add_option('-t', '--threshold', type='float', dest='randomthreshold',
+                        help='Cell threshold for random initialization', default=0.5, metavar='THRESHOLD')
+    optGroup.add_option('-p', '--shape', type='str', dest='fillshape',
+                        help='Shape for filling ("double-u", "r-pentomino")', default='double-u')
+    parser.add_option_group(optGroup)
+
     return parser
 
 
