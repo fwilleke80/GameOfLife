@@ -52,9 +52,14 @@ class GameOfLife:
         self.grid = GameOfLife.new_grid(self.gridWidth, self.gridHeight)
         self.initialized = True
 
-    def coord_to_index(self, x, y):
+########################################################
+# Conversion
+########################################################
+
+    def coord_to_index(self, coord):
         """Convert XY coordinates to a grid index
         """
+        x, y = coord
         x = x % self.gridWidth
         y = y % self.gridHeight
         return self.gridWidth * y + x
@@ -64,60 +69,87 @@ class GameOfLife:
         """
         return (i % self.gridWidth, i / self.gridWidth)
 
+########################################################
+# Get / Set
+########################################################
+
+    def get_cell(self, coord):
+        """Get the value of a cell
+        """
+        if self.wrap:
+            return self.grid[self.coord_to_index(coord)]
+        else:
+            if self.is_inside_grid(coord):
+                return self.grid[self.coord_to_index(coord)]
+            return False
+
+    def set_cell(self, coord, value):
+        """Set value of a cell
+        """
+        if self.is_inside_grid(coord) or self.wrap:
+            self.grid[self.coord_to_index(coord)] = value
+
+########################################################
+# Fill grid
+########################################################
+
     def fill_grid_random(self):
         """Fill grid randomly
         """
         random.seed(self.seed)
         for y in range(0, self.gridHeight):
             for x in range(0, self.gridWidth):
-                tIndex = self.coord_to_index(x, y)
+                tIndex = self.coord_to_index((x, y))
                 if random.random() < self.randomThreshold:
                     self.grid[tIndex] = True
                 else:
                     self.grid[tIndex] = False
 
+    def draw_shape(self, coord, shape):
+        x, y = coord
+        # Double-U
+        if shape == 'double-u':
+            # Upper U
+            self.set_cell((x - 1, y - 1), True)
+            self.set_cell((x - 1, y - 2), True)
+            self.set_cell((x - 1, y - 3), True)
+            self.set_cell((x, y - 3), True)
+            self.set_cell((x + 1, y - 3), True)
+            self.set_cell((x + 1, y - 2), True)
+            self.set_cell((x + 1, y - 1), True)
+
+            # Lower U
+            self.set_cell((x - 1, y + 1), True)
+            self.set_cell((x - 1, y + 2), True)
+            self.set_cell((x - 1, y + 3), True)
+            self.set_cell((x, y + 3), True)
+            self.set_cell((x + 1, y + 3), True)
+            self.set_cell((x + 1, y + 2), True)
+            self.set_cell((x + 1, y + 1), True)
+        elif shape == 'r-pentomino':
+            self.set_cell((x, y), True)
+            self.set_cell((x - 1, y), True)
+            self.set_cell((x, y + 1), True)
+            self.set_cell((x, y - 1), True)
+            self.set_cell((x + 1, y - 1), True)
+
+
     def fill_grid_shape1(self):
         """Put double U shape in center of grid
         """
-        centerX = self.gridWidth / 2
-        centerY = self.gridHeight / 2
-
-        # Upper U
-        self.grid[self.coord_to_index(centerX - 1, centerY - 1)] = True
-        self.grid[self.coord_to_index(centerX - 1, centerY - 2)] = True
-        self.grid[self.coord_to_index(centerX - 1, centerY - 3)] = True
-        self.grid[self.coord_to_index(centerX, centerY - 3)] = True
-        self.grid[self.coord_to_index(centerX + 1, centerY - 3)] = True
-        self.grid[self.coord_to_index(centerX + 1, centerY - 2)] = True
-        self.grid[self.coord_to_index(centerX + 1, centerY - 1)] = True
-
-        # Lower U
-        self.grid[self.coord_to_index(centerX - 1, centerY + 1)] = True
-        self.grid[self.coord_to_index(centerX - 1, centerY + 2)] = True
-        self.grid[self.coord_to_index(centerX - 1, centerY + 3)] = True
-        self.grid[self.coord_to_index(centerX, centerY + 3)] = True
-        self.grid[self.coord_to_index(centerX + 1, centerY + 3)] = True
-        self.grid[self.coord_to_index(centerX + 1, centerY + 2)] = True
-        self.grid[self.coord_to_index(centerX + 1, centerY + 1)] = True
+        self.draw_shape((self.gridWidth / 2, self.gridHeight / 2), 'double-u')
 
     def fill_grid_shape2(self):
         """Put r-Pentomino in center of grid
         """
-        centerX = self.gridWidth / 2
-        centerY = self.gridHeight / 2
-
-        self.grid[self.coord_to_index(centerX, centerY)] = True
-        self.grid[self.coord_to_index(centerX - 1, centerY)] = True
-        self.grid[self.coord_to_index(centerX, centerY + 1)] = True
-        self.grid[self.coord_to_index(centerX, centerY - 1)] = True
-        self.grid[self.coord_to_index(centerX + 1, centerY - 1)] = True
+        self.draw_shape((self.gridWidth / 2, self.gridHeight / 2), 'r-pentomino')
 
     def fill_grid_checkerboard1(self):
         """Fill grid with small checkers
         """
         for y in range(0, self.gridHeight):
             for x in range(0, self.gridWidth):
-                cellIndex = self.coord_to_index(x, y)
+                cellIndex = self.coord_to_index((x, y))
                 self.grid[cellIndex] = True if (cellIndex % 2 == 0) else False
 
     def fill_grid_checkerboard2(self):
@@ -125,68 +157,60 @@ class GameOfLife:
         """
         for y in range(0, self.gridHeight):
             for x in range(0, self.gridWidth):
-                cellIndex = self.coord_to_index(x, y)
+                cellIndex = self.coord_to_index((x, y))
                 self.grid[cellIndex] = True if (
-                    (cellIndex / 2) % 2 == 0) else False
+                    (cellIndex / 3) % 2 == 0) else False
 
     def fill_grid(self):
         """Fill the grid using one of the available methods
         """
         self.initMethods[self.initMethod]()
 
-    def inside_grid(self, x, y):
+########################################################
+# Evaluation
+########################################################
+
+    def is_inside_grid(self, coord):
         """Return True if given coordinates are within the grid
         """
+        x, y = coord
         if x < 0 or x >= self.gridWidth or \
            y < 0 or y >= self.gridHeight:
             return False
         return True
 
-    def get_cell(self, x, y):
-        """Get the value of a cell
-        """
-        if self.wrap:
-            return self.grid[self.coord_to_index(x, y)]
-        else:
-            if self.inside_grid(x, y):
-                return self.grid[self.coord_to_index(x, y)]
-            return False
-
-    def set_cell(self, x, y, value):
-        """Set value of a cell
-        """
-        if self.inside_grid(x, y) or self.wrap:
-            self.grid[self.coord_to_index(x, y)] = value
-
-    def count_alive_neighbors(self, x, y):
+    def count_alive_neighbors(self, coord):
         """Count living neighbor cells of given cell
         """
+        # Unpack coordinates
+        x, y = coord
+
         # Count alive neighbors
         aliveNeighbors = 0
-        if self.get_cell(x - 1, y):  # left
+        if self.get_cell((x - 1, y)):  # left
             aliveNeighbors += 1
-        if self.get_cell(x + 1, y):  # right
+        if self.get_cell((x + 1, y)):  # right
             aliveNeighbors += 1
-        if self.get_cell(x, y - 1):  # top
+        if self.get_cell((x, y - 1)):  # top
             aliveNeighbors += 1
-        if self.get_cell(x, y + 1):  # bottom
+        if self.get_cell((x, y + 1)):  # bottom
             aliveNeighbors += 1
-        if self.get_cell(x - 1, y - 1):  # top left
+        if self.get_cell((x - 1, y - 1)):  # top left
             aliveNeighbors += 1
-        if self.get_cell(x + 1, y - 1):  # top right
+        if self.get_cell((x + 1, y - 1)):  # top right
             aliveNeighbors += 1
-        if self.get_cell(x - 1, y + 1):  # bottom left
+        if self.get_cell((x - 1, y + 1)):  # bottom left
             aliveNeighbors += 1
-        if self.get_cell(x + 1, y + 1):  # bottom right
+        if self.get_cell((x + 1, y + 1)):  # bottom right
             aliveNeighbors += 1
         return aliveNeighbors
 
-    def check_cell(self, x, y):
+    def check_cell(self, coord):
         """Check a cell against the rules, return True if
         it should be alive and False if it should be dead
         """
-        aliveNeighbors = self.count_alive_neighbors(x, y)
-        if self.get_cell(x, y):
+        aliveNeighbors = self.count_alive_neighbors(coord)
+        if self.get_cell(coord):
             # If cell is alive
             if aliveNeighbors < 2:
                 return False  # Die out
@@ -200,18 +224,6 @@ class GameOfLife:
                 return True
         return False
 
-    def advance_grid(self):
-        """Compute a new generation of the grid
-        """
-        timeStart = time.time()
-        tmpGrid = GameOfLife.new_grid(self.gridWidth, self.gridHeight)
-        for y in range(0, self.gridHeight):
-            for x in range(0, self.gridWidth):
-                tmpGrid[self.coord_to_index(x, y)] = self.check_cell(x, y)
-        self.grid = tmpGrid
-        self.generation += 1
-        self.lastCalculationTime = time.time() - timeStart
-
     def count_alive(self):
         """Count all living cells on the grid
         """
@@ -221,6 +233,22 @@ class GameOfLife:
                 alive += 1
         return alive
 
+########################################################
+# Action
+########################################################
+
+    def advance_grid(self):
+        """Compute a new generation of the grid
+        """
+        timeStart = time.time()
+        tmpGrid = GameOfLife.new_grid(self.gridWidth, self.gridHeight)
+        for y in range(0, self.gridHeight):
+            for x in range(0, self.gridWidth):
+                tmpGrid[self.coord_to_index((x, y))] = self.check_cell((x, y))
+        self.grid = tmpGrid
+        self.generation += 1
+        self.lastCalculationTime = time.time() - timeStart
+
     def draw(self):
         """Draw the grid to the screen
         """
@@ -228,7 +256,7 @@ class GameOfLife:
         for y in range(0, self.gridHeight):
             gridLine = ''
             for x in range(0, self.gridWidth):
-                gridIndex = self.coord_to_index(x, y)
+                gridIndex = self.coord_to_index((x, y))
                 gridLine += u'\u2588' if self.grid[gridIndex] else u' '
             bufferStr = bufferStr + '\n' + gridLine
         print(bufferStr)
