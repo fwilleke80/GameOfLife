@@ -126,12 +126,39 @@ class GameOfLife:
             self.set_cell((x + 1, y + 3), True)
             self.set_cell((x + 1, y + 2), True)
             self.set_cell((x + 1, y + 1), True)
+        # R-Pentomino
         elif shape == 'r-pentomino':
             self.set_cell((x, y), True)
             self.set_cell((x - 1, y), True)
             self.set_cell((x, y + 1), True)
             self.set_cell((x, y - 1), True)
             self.set_cell((x + 1, y - 1), True)
+        # F
+        elif shape == 'f':
+            self.set_cell((x, y), True)
+            self.set_cell((x, y - 1), True)
+            self.set_cell((x, y - 2), True)
+            self.set_cell((x, y - 3), True)
+            self.set_cell((x - 1, y - 3), True)
+            self.set_cell((x + 1, y - 3), True)
+            self.set_cell((x, y - 4), True)
+            self.set_cell((x, y - 5), True)
+            self.set_cell((x, y - 6), True)
+            self.set_cell((x + 1, y - 6), True)
+            self.set_cell((x + 2, y - 6), True)
+            self.set_cell((x - 1, y - 6), True)
+            self.set_cell((x - 2, y - 6), True)
+        # Line
+        elif shape == 'line':
+            lineLength = 20
+            for x1 in range(x - lineLength, x + lineLength):
+                self.set_cell((x1, y), True)
+                self.set_cell((x1 - 1, y), True)
+                self.set_cell((x1 - 2, y), True)
+                self.set_cell((x1 - 3, y), True)
+                self.set_cell((x1 + 1, y), True)
+                self.set_cell((x1 + 2, y), True)
+                self.set_cell((x1 + 3, y), True)
 
     def fill_grid_shape(self):
         """Put double U shape in center of grid
@@ -254,26 +281,29 @@ class GameOfLife:
               ('Init method: ' + self.initMethod).ljust(HUD_COL_WIDTH) +
               (('Seed: ' + (str(self.seed) if self.seed != 0 else '(random)')).ljust(HUD_COL_WIDTH) if self.initMethod == 'random' else '') +
               (('Threshold: ' + str(self.randomThreshold)).ljust(HUD_COL_WIDTH) if self.initMethod == 'random' else '') +
+              (('Shape: ' + str(self.fillshape)).ljust(HUD_COL_WIDTH) if self.initMethod == 'shape' else '') +
               ('Calc time: ' +
                '{:0.4f}'.format(self.lastCalculationTime) + ' sec').ljust(HUD_COL_WIDTH)
               )
         print('\nPress CTRL+C to quit!')
 
-    def run(self, pauseInterval=0):
+    def run(self, step=0):
+        GameOfLife.clear_screen()
+        self.draw()
         while True:
-            GameOfLife.clear_screen()
-            self.draw()
-            self.advance_grid()
-            time.sleep(self.sleepTime)
-            if pauseInterval and (self.generation % pauseInterval == 0):
+            if step and (self.generation % step == 0):
                 GameOfLife.clear_screen()
                 self.draw()
-                res = raw_input('Reached generation ' + str(self.generation) + '. Stop [enter], do another ' + str(
-                    pauseInterval) + ' [n], or continue forever [c]? [y/n] ').lower()
-                if res == 'y':
+                res = raw_input('Reached generation ' + str(self.generation) + '. Do another ' + str(
+                    step) + ' [enter], stop [n], or continue forever [c]? [enter/n/c] ').lower()
+                if res == 'n':
                     return
                 if res == 'c':
-                    pauseInterval = 0
+                    step = 0
+            self.advance_grid()
+            GameOfLife.clear_screen()
+            self.draw()
+            time.sleep(self.sleepTime)
 
     @staticmethod
     def new_grid(width, height):
@@ -295,25 +325,27 @@ def setup_options():
     parser = optparse.OptionParser()
     optGroup = optparse.OptionGroup(
         parser, 'General options', 'Options for the simulation engine')
-    optGroup.add_option('-r', '--resolution', type='int', dest='resolution', nargs=2,
+    optGroup.add_option('--resolution', type='int', dest='resolution', nargs=2,
                         help='Grid resolution', default=(DEFAULT_GRID_WIDTH, DEFAULT_GRID_HEIGHT), metavar='WIDTH HEIGHT')
-    optGroup.add_option('-f', '--fps', type='int', dest='fps',
+    optGroup.add_option('--fps', type='int', dest='fps',
                         help='Frames per second', default=DEFAULT_FPS)
-    optGroup.add_option('-i', '--interval', type='int',
+    optGroup.add_option('--interval', type='int',
                         dest='interval', help='Pause every n generations', default=0)
-    optGroup.add_option('-w', '--wrap', action='store_true', dest='wrap',
+    optGroup.add_option('--step', type='int',
+                        dest='step', help='Pause every n generations', default=0)
+    optGroup.add_option('--wrap', action='store_true', dest='wrap',
                         help='Set to for torodial space', default=False)
     parser.add_option_group(optGroup)
     optGroup = optparse.OptionGroup(
         parser, 'Fill options', 'Options for grid initialization')
-    optGroup.add_option('-m', '--method', type='str', dest='initmethod',
+    optGroup.add_option('--method', type='str', dest='initmethod',
                         help='Method of grid initialization ("random", "shape", "checkerboard")', default='random')
-    optGroup.add_option('-s', '--seed', type='int', dest='randomseed',
+    optGroup.add_option('--seed', type='int', dest='randomseed',
                         help='Random seed', default=0, metavar='SEED')
-    optGroup.add_option('-t', '--threshold', type='float', dest='randomthreshold',
+    optGroup.add_option('--threshold', type='float', dest='randomthreshold',
                         help='Cell threshold for random initialization', default=0.5, metavar='THRESHOLD')
-    optGroup.add_option('-p', '--shape', type='str', dest='fillshape',
-                        help='Shape for filling ("double-u", "r-pentomino")', default='double-u')
+    optGroup.add_option('--shape', type='str', dest='fillshape',
+                        help='Shape for filling ("double-u", "r-pentomino", "f", "line")', default='double-u')
     parser.add_option_group(optGroup)
 
     return parser
@@ -336,7 +368,7 @@ def main():
     game = GameOfLife()
     game.init(settings=optionsDict)
     game.fill_grid()
-    game.run(pauseInterval=options.interval)
+    game.run(step=options.step)
 
 
 if __name__ == "__main__":
