@@ -33,6 +33,7 @@ class GameOfLife:
         self.lastCalculationTime = 0.0
         self.initMethod = ''
         self.fillshape = ''
+        self.shapeFilename = ''
         self.grid = []
 
     def init(self, settings):
@@ -49,6 +50,7 @@ class GameOfLife:
         self.wrap = settings['wrap']
         self.lastCalculationTime = 0.0
         self.fillshape = settings['fillshape']
+        self.shapeFilename = settings['shapefile']
         self.grid = GameOfLife.new_grid(self.gridWidth, self.gridHeight)
         self.initialized = True
 
@@ -105,7 +107,7 @@ class GameOfLife:
                 else:
                     self.grid[tIndex] = False
 
-    def draw_shape(self, coord, shape):
+    def draw_shape(self, coord, shape, drawDeadFiledata=True):
         x, y = coord
         # Double-U
         if shape == 'double-u':
@@ -159,6 +161,17 @@ class GameOfLife:
                 self.set_cell((x1 + 1, y), True)
                 self.set_cell((x1 + 2, y), True)
                 self.set_cell((x1 + 3, y), True)
+        # Load shape from file
+        elif shape == 'file':
+            shapeData = GameOfLife.load_shape_data(self.shapeFilename)
+            offsetX = len(shapeData[0]) / 2
+            offsetY = len(shapeData) / 2
+            for target_y, shapeLine in enumerate(shapeData):
+                for target_x, char in enumerate(shapeLine):
+                    if char == 'o':
+                        self.set_cell((x - offsetX + target_x, y - offsetY + target_y), True)
+                    elif char == '.' and drawDeadFiledata:
+                        self.set_cell((x + target_x, y + target_y), False)
 
     def fill_grid_shape(self):
         """Put double U shape in center of grid
@@ -306,6 +319,23 @@ class GameOfLife:
             time.sleep(self.sleepTime)
 
     @staticmethod
+    def load_shape_data(filename):
+        """Load shape data from ASCII file
+        """
+        if not os.path.isfile(filename):
+            raise IOError('A file called ' + filename + ' does not exist!')
+
+        try:
+            with open(filename, 'rb') as dataFile:
+                lines = dataFile.readlines()
+        except:
+            print('Error reason from file ' + filename)
+            lines = []
+
+        resultLines = [line.lower() for line in lines if (len(line) > 0 and line.lower()[0] in 'o.')]
+        return resultLines
+
+    @staticmethod
     def new_grid(width, height):
         return [False] * width * height
 
@@ -345,7 +375,9 @@ def setup_options():
     optGroup.add_option('--threshold', type='float', dest='randomthreshold',
                         help='Cell threshold for random initialization', default=0.5, metavar='THRESHOLD')
     optGroup.add_option('--shape', type='str', dest='fillshape',
-                        help='Shape for filling ("double-u", "r-pentomino", "f", "line")', default='double-u')
+                        help='Shape for filling ("double-u", "r-pentomino", "f", "line", "file")', default='double-u')
+    optGroup.add_option('--shapefile', type='str', dest='shapefile',
+                        help='Path to an ASCII shape data file', default='')
     parser.add_option_group(optGroup)
 
     return parser
