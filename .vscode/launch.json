@@ -17,7 +17,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/gol.py",
             "console": "integratedTerminal",
-            "args": ["--method", "shape", "--shape", "file", "--shapefile", "tetradecathlon.txt"]
+            "args": ["--method", "shape", "--shape", "file", "--shapefile", "cells/tetradecathlon.cells"]
         }
     ]
 }
