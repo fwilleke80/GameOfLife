@@ -164,10 +164,12 @@ class GameOfLife:
         # Load shape from file
         elif shape == 'file':
             shapeData = GameOfLife.load_shape_data(self.shapeFilename)
+            offsetX = len(shapeData[0]) / 2
+            offsetY = len(shapeData) / 2
             for target_y, shapeLine in enumerate(shapeData):
                 for target_x, char in enumerate(shapeLine):
                     if char == 'o':
-                        self.set_cell((x + target_x, y + target_y), True)
+                        self.set_cell((x - offsetX + target_x, y - offsetY + target_y), True)
                     elif char == '.' and drawDeadFiledata:
                         self.set_cell((x + target_x, y + target_y), False)
 
