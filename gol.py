@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import random
 import optparse
@@ -36,6 +37,9 @@ class GameOfLife:
         self.shapeFilename = ''
         self.grid = []
         self.changeGrid = []
+        self.ruleSet = ''
+        self.ruleSetValSurvive = ''
+        self.ruleSetValBirth = ''
 
     def init(self, settings):
         """Get settings from dictionary, initialize grid
@@ -54,6 +58,16 @@ class GameOfLife:
         self.shapeFilename = settings['shapefile']
         self.grid = GameOfLife.new_grid(self.gridWidth, self.gridHeight)
         self.changeGrid = GameOfLife.new_grid(self.gridWidth, self.gridHeight, defaultValue=True)
+        # Ruleset parser
+        self.ruleSet = settings['ruleset'].lower()
+        if '/' in self.ruleSet:
+            (self.ruleSetValSurvive, self.ruleSetValBirth) = self.ruleSet.split('/')
+            if not self.ruleSetValSurvive.isdigit() or not self.ruleSetValBirth.isdigit():
+                sys.exit('Error: Both parts of the rule string must be numeric! (Format int/int')
+            self.ruleSetValSurvive = [int(n) for n in self.ruleSetValSurvive]
+            self.ruleSetValBirth = [int(n) for n in self.ruleSetValBirth]
+            self.ruleSet = 'p'
+
         self.initialized = True
 
 ########################################################
@@ -256,18 +270,31 @@ class GameOfLife:
         it should be alive and False if it should be dead
         """
         aliveNeighbors = self.count_alive_neighbors(coord)
-        if self.get_cell(coord):
-            # If cell is alive
-            if aliveNeighbors < 2:
-                return False  # Die out
-            elif aliveNeighbors >= 2 and aliveNeighbors <= 3:
-                return True  # Live on
-            elif aliveNeighbors > 3:
-                return False  # Die due to overpopulation
+        if self.ruleSet == 'copyworld':
+            return (aliveNeighbors % 2) != 0
+        elif self.ruleSet == 'p':
+            if self.get_cell(coord):
+                if aliveNeighbors in self.ruleSetValSurvive:
+                    return True
+                else:
+                    return False
+            else:
+                if aliveNeighbors in self.ruleSetValBirth:
+                    return True
         else:
-            # If cell is dead
-            if aliveNeighbors == 3:
-                return True
+            # Original rule set
+            if self.get_cell(coord):
+                # If cell is alive
+                if aliveNeighbors < 2:
+                    return False  # Die out
+                elif aliveNeighbors >= 2 and aliveNeighbors <= 3:
+                    return True  # Live on
+                elif aliveNeighbors > 3:
+                    return False  # Die due to overpopulation
+            else:
+                # If cell is dead
+                if aliveNeighbors == 3:
+                    return True
         return False
 
     def count_alive(self):
@@ -309,13 +336,15 @@ class GameOfLife:
         print('\n' +
               ('Generation: ' + str(self.generation)).ljust(HUD_COL_WIDTH) +
               ('Alive: ' + str(self.count_alive())).ljust(HUD_COL_WIDTH) +
+              ('Calc time: ' +
+               '{:0.4f}'.format(self.lastCalculationTime) + ' sec').ljust(HUD_COL_WIDTH) +
               ('Resolution: ' + str(self.gridWidth) + 'x' + str(self.gridHeight)).ljust(HUD_COL_WIDTH) +
+               '\n' +
               ('Init method: ' + self.initMethod).ljust(HUD_COL_WIDTH) +
               (('Seed: ' + (str(self.seed) if self.seed != 0 else '(random)')).ljust(HUD_COL_WIDTH) if self.initMethod == 'random' else '') +
               (('Threshold: ' + str(self.randomThreshold)).ljust(HUD_COL_WIDTH) if self.initMethod == 'random' else '') +
               (('Shape: ' + str(self.fillshape)).ljust(HUD_COL_WIDTH) if self.initMethod == 'shape' else '') +
-              ('Calc time: ' +
-               '{:0.4f}'.format(self.lastCalculationTime) + ' sec').ljust(HUD_COL_WIDTH)
+              ('Rules: ' + (self.ruleSet if self.ruleSet != 'p' else (''.join(str(x) for x in self.ruleSetValSurvive) + '/' + ''.join(str(x) for x in self.ruleSetValBirth)))).ljust(HUD_COL_WIDTH)
               )
         print('\nPress CTRL+C to quit!')
 
@@ -374,6 +403,8 @@ def setup_options():
     parser = optparse.OptionParser()
     optGroup = optparse.OptionGroup(
         parser, 'General options', 'Options for the simulation engine')
+    optGroup.add_option('--rules', type='str', dest='ruleset',
+                        help='Rules of the system ["original", "copyworld", "n/m"]', metavar='RULESET', default='original')
     optGroup.add_option('--resolution', type='int', dest='resolution', nargs=2,
                         help='Grid resolution', default=(DEFAULT_GRID_WIDTH, DEFAULT_GRID_HEIGHT), metavar='WIDTH HEIGHT')
     optGroup.add_option('--fps', type='int', dest='fps',
@@ -390,7 +421,7 @@ def setup_options():
     optGroup.add_option('--method', type='str', dest='initmethod',
                         help='Method of grid initialization ("random", "shape", "checkerboard")', default='random')
     optGroup.add_option('--seed', type='int', dest='randomseed',
-                        help='Random seed', default=0, metavar='SEED')
+                        help='Random seed', default=time.time(), metavar='SEED')
     optGroup.add_option('--threshold', type='float', dest='randomthreshold',
                         help='Cell threshold for random initialization', default=0.5, metavar='THRESHOLD')
     optGroup.add_option('--shape', type='str', dest='fillshape',
