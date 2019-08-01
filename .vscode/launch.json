@@ -18,6 +18,14 @@
             "program": "${workspaceFolder}/gol.py",
             "console": "integratedTerminal",
             "args": ["--method", "shape", "--shape", "file", "--shapefile", "cells/tetradecathlon.cells"]
+        },
+        {
+            "name": "Python: Rules test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/gol.py",
+            "console": "integratedTerminal",
+            "args": ["--rules", "1357/1357", "--threshold", "0.0001"]
         }
     ]
 }
