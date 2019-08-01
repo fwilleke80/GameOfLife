@@ -35,6 +35,7 @@ class GameOfLife:
         self.fillshape = ''
         self.shapeFilename = ''
         self.grid = []
+        self.changeGrid = []
 
     def init(self, settings):
         """Get settings from dictionary, initialize grid
@@ -52,6 +53,7 @@ class GameOfLife:
         self.fillshape = settings['fillshape']
         self.shapeFilename = settings['shapefile']
         self.grid = GameOfLife.new_grid(self.gridWidth, self.gridHeight)
+        self.changeGrid = GameOfLife.new_grid(self.gridWidth, self.gridHeight, defaultValue=True)
         self.initialized = True
 
 ########################################################
@@ -85,11 +87,28 @@ class GameOfLife:
                 return self.grid[self.coord_to_index(coord)]
             return False
 
+    def get_cell_changed(self, coord):
+        """Look up if the value of a cell has changed in the last advance() call
+        """
+        if self.wrap:
+            return self.changeGrid[self.coord_to_index(coord)]
+        else:
+            if self.is_inside_grid(coord):
+                return self.changeGrid[self.coord_to_index(coord)]
+            return False
+
+
     def set_cell(self, coord, value):
         """Set value of a cell
         """
         if self.is_inside_grid(coord) or self.wrap:
-            self.grid[self.coord_to_index(coord)] = value
+            cellIndex = self.coord_to_index(coord)
+            currentValue = self.grid[cellIndex]
+            if currentValue != value:
+                self.grid[cellIndex] = value
+                self.changeGrid[cellIndex] = True
+            else:
+                self.changeGrid[cellIndex] = False
 
 ########################################################
 # Fill grid
@@ -336,7 +355,7 @@ class GameOfLife:
         return resultLines
 
     @staticmethod
-    def new_grid(width, height):
+    def new_grid(width, height, defaultValue=False):
         return [False] * width * height
 
     @staticmethod
