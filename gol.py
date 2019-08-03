@@ -60,16 +60,8 @@ class GameOfLife:
         self.changeGrid = GameOfLife.new_grid(
             self.gridWidth, self.gridHeight, defaultValue=True)
         # Ruleset parser
-        self.ruleSet = settings['ruleset'].lower()
-        if '/' in self.ruleSet:
-            (self.ruleSetValSurvive, self.ruleSetValBirth) = self.ruleSet.split('/')
-            if not self.ruleSetValSurvive.isdigit() or not self.ruleSetValBirth.isdigit():
-                sys.exit(
-                    'Error: Both parts of the rule string must be numeric! (Format int/int')
-            self.ruleSetValSurvive = [int(n) for n in self.ruleSetValSurvive]
-            self.ruleSetValBirth = [int(n) for n in self.ruleSetValBirth]
-            self.ruleSet = 'p'
-
+        self.ruleSet, self.ruleSetValSurvive, self.ruleSetValBirth = GameOfLife.parse_ruleset(
+            settings['ruleset'])
         self.initialized = True
 
 ########################################################
@@ -272,31 +264,12 @@ class GameOfLife:
         it should be alive and False if it should be dead
         """
         aliveNeighbors = self.count_alive_neighbors(coord)
-        if self.ruleSet == 'copyworld':
-            return (aliveNeighbors % 2) != 0
-        elif self.ruleSet == 'p':
-            if self.get_cell(coord):
-                if aliveNeighbors in self.ruleSetValSurvive:
-                    return True
-                else:
-                    return False
-            else:
-                if aliveNeighbors in self.ruleSetValBirth:
-                    return True
+        if self.get_cell(coord):
+            if aliveNeighbors in self.ruleSetValSurvive:
+                return True
         else:
-            # Original rule set
-            if self.get_cell(coord):
-                # If cell is alive
-                if aliveNeighbors < 2:
-                    return False  # Die out
-                elif aliveNeighbors >= 2 and aliveNeighbors <= 3:
-                    return True  # Live on
-                elif aliveNeighbors > 3:
-                    return False  # Die due to overpopulation
-            else:
-                # If cell is dead
-                if aliveNeighbors == 3:
-                    return True
+            if aliveNeighbors in self.ruleSetValBirth:
+                return True
         return False
 
     def count_alive(self):
@@ -392,6 +365,29 @@ class GameOfLife:
         return [False] * width * height
 
     @staticmethod
+    def parse_ruleset(ruleSetString):
+        ruleSet = ruleSetString.lower()
+
+        # Cathc specially named rule sets
+        if ruleSet == 'original':
+            ruleSet = '23/3'
+        elif ruleSet == 'copyworld':
+            ruleSet = '1357/1357'
+
+        if '/' in ruleSet:
+            (ruleSurvive, ruleBirth) = ruleSet.split('/')
+            if not ruleSurvive.isdigit() or not ruleBirth.isdigit():
+                sys.exit(
+                    'Error: Both parts of the rule string must be numeric! (Format (int)survive/(int)birth)')
+            ruleSurvive = [int(n) for n in ruleSurvive]
+            ruleBirth = [int(n) for n in ruleBirth]
+            ruleSet = 'p'
+        else:
+            # Could not parse a reasonable rule set
+            pass
+        return (ruleSet, ruleSurvive, ruleBirth)
+
+    @staticmethod
     def clear_screen():
         """Clear screen
         """
@@ -408,7 +404,7 @@ def setup_options():
     optGroup = optparse.OptionGroup(
         parser, 'General options', 'Options for the simulation engine')
     optGroup.add_option('--rules', type='str', dest='ruleset',
-                        help='Rules of the system ["original", "copyworld", "n/m"]', metavar='RULESET', default='original')
+                        help='Rules of the system ["original", "copyworld", "[s]/[b]"]', metavar='RULESET', default='original')
     optGroup.add_option('--resolution', type='int', dest='resolution', nargs=2,
                         help='Grid resolution', default=(DEFAULT_GRID_WIDTH, DEFAULT_GRID_HEIGHT), metavar='WIDTH HEIGHT')
     optGroup.add_option('--fps', type='int', dest='fps',
