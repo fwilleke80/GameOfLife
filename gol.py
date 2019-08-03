@@ -57,13 +57,15 @@ class GameOfLife:
         self.fillshape = settings['fillshape']
         self.shapeFilename = settings['shapefile']
         self.grid = GameOfLife.new_grid(self.gridWidth, self.gridHeight)
-        self.changeGrid = GameOfLife.new_grid(self.gridWidth, self.gridHeight, defaultValue=True)
+        self.changeGrid = GameOfLife.new_grid(
+            self.gridWidth, self.gridHeight, defaultValue=True)
         # Ruleset parser
         self.ruleSet = settings['ruleset'].lower()
         if '/' in self.ruleSet:
             (self.ruleSetValSurvive, self.ruleSetValBirth) = self.ruleSet.split('/')
             if not self.ruleSetValSurvive.isdigit() or not self.ruleSetValBirth.isdigit():
-                sys.exit('Error: Both parts of the rule string must be numeric! (Format int/int')
+                sys.exit(
+                    'Error: Both parts of the rule string must be numeric! (Format int/int')
             self.ruleSetValSurvive = [int(n) for n in self.ruleSetValSurvive]
             self.ruleSetValBirth = [int(n) for n in self.ruleSetValBirth]
             self.ruleSet = 'p'
@@ -110,7 +112,6 @@ class GameOfLife:
             if self.is_inside_grid(coord):
                 return self.changeGrid[self.coord_to_index(coord)]
             return False
-
 
     def set_cell(self, coord, value):
         """Set value of a cell
@@ -202,7 +203,8 @@ class GameOfLife:
             for target_y, shapeLine in enumerate(shapeData):
                 for target_x, char in enumerate(shapeLine):
                     if char == 'o':
-                        self.set_cell((x - offsetX + target_x, y - offsetY + target_y), True)
+                        self.set_cell(
+                            (x - offsetX + target_x, y - offsetY + target_y), True)
                     elif char == '.' and drawDeadFiledata:
                         self.set_cell((x + target_x, y + target_y), False)
 
@@ -339,12 +341,13 @@ class GameOfLife:
               ('Calc time: ' +
                '{:0.4f}'.format(self.lastCalculationTime) + ' sec').ljust(HUD_COL_WIDTH) +
               ('Resolution: ' + str(self.gridWidth) + 'x' + str(self.gridHeight)).ljust(HUD_COL_WIDTH) +
-               '\n' +
+              '\n' +
               ('Init method: ' + self.initMethod).ljust(HUD_COL_WIDTH) +
               (('Seed: ' + (str(self.seed) if self.seed != 0 else '(random)')).ljust(HUD_COL_WIDTH) if self.initMethod == 'random' else '') +
               (('Threshold: ' + str(self.randomThreshold)).ljust(HUD_COL_WIDTH) if self.initMethod == 'random' else '') +
               (('Shape: ' + str(self.fillshape)).ljust(HUD_COL_WIDTH) if self.initMethod == 'shape' else '') +
-              ('Rules: ' + (self.ruleSet if self.ruleSet != 'p' else (''.join(str(x) for x in self.ruleSetValSurvive) + '/' + ''.join(str(x) for x in self.ruleSetValBirth)))).ljust(HUD_COL_WIDTH)
+              ('Rules: ' + (self.ruleSet if self.ruleSet != 'p' else (''.join(str(x)
+                                                                              for x in self.ruleSetValSurvive) + '/' + ''.join(str(x) for x in self.ruleSetValBirth)))).ljust(HUD_COL_WIDTH)
               )
         print('\nPress CTRL+C to quit!')
 
@@ -380,7 +383,8 @@ class GameOfLife:
             print('Error reason from file ' + filename)
             lines = []
 
-        resultLines = [line.lower() for line in lines if (len(line) > 0 and line.lower()[0] in 'o.')]
+        resultLines = [line.lower() for line in lines if (
+            len(line) > 0 and line.lower()[0] in 'o.')]
         return resultLines
 
     @staticmethod
