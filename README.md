@@ -92,6 +92,6 @@ Fireworks in a copyworld.
 * `python gol.py --seed=69 --threshold=0.1`  
 Chaotic stuff that kind of stabilizes after around 300 evaluations.
 
-* `python gol.py --method=shape --shape=file --shapefile=cells/edgerepairspaceshipsandobjects.rle --resolution 240 80 --wrap`
+* `python gol.py --method=shape --shape=file --shapefile=cells/edgerepairspaceshipsandobjects.rle --resolution 240 80 --wrap`  
 Creates the Edge-repair spaceship 1 found by David Bell in 1992.
  
