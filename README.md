@@ -66,6 +66,7 @@ There are several different pre-defined shapes to initialize the grid with. Howe
 
 * __shapefile__  
   `gol.py --method=shape --shape=file --shapefile=cells/p28glidershuttle.cells`  
+  `gol.py --method=shape --shape=file --shapefile=cells/gosperglidergun.rle`  
 This option lets you define a file to load for grid initialization. There are some example files in the "cells" subfolder, but you can also write your own, or get more from the [Life Wiki](http://www.conwaylife.com/wiki/Main_Page).
 
   Supported file formats are:
