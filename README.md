@@ -22,7 +22,7 @@ There are, however, several command line options to change what happens:
   There are special rule names that can be used for convenience: "original" is the default rule set (23/3) and "copyworld" is a strange world where patterns are reproduced endlessly (1357/1357).
 
 * __resolution__  
-  `gol.py --resolution=200 80`
+  `gol.py --resolution=200 80`  
   This determines the resolution of the cell grid. The default resolution is 120x50.
 
 * __fps__  
@@ -43,24 +43,43 @@ There are, however, several command line options to change what happens:
   `gol.py --method=random`  
   `gol.py --method=checkerboard`  
   `gol.py --method=shape`  
-  This determines the method of grid initialization. Default is "random".
+This determines the method of grid initialization. Default is "random".
   * __random__ will fill the grid randomly. The distribution of random cells can be controlled with the __--seed__ optoins, the relative amount of alive cells can be controlled with the __--threshold__ option.
   * __checkerboard__ will fill the grid with a parametric checkerboard pattern.
   * __shape__ will place a shape (roughly) in the center of the grid. What kind of shape can be controlled with the __--shape__ and __--shapefile__ options.
+
 * __seed__  
   `gol.py --method=random --seed=12345`  
-  The random seed affects the distribution of alive cells. When using the same seed as before, the same initial distribution will occur. A seed value of "0" will use a random seed value, so the distribution will be unique every time.
+The random seed affects the distribution of alive cells. When using the same seed as before, the same initial distribution will occur. A seed value of "0" will use a random seed value, so the distribution will be unique every time.
+
 * __threshold__  
   `gol.py --method=random --threshold=0.1`  
-  The threshold value controls the relative amount of alive cells in random initialization. It should be between 0.0 and 1.0. Larger values will produce more initial alive cells.
+The threshold value controls the relative amount of alive cells in random initialization. It should be between 0.0 and 1.0. Larger values will produce more initial alive cells.
+
 * __shape__  
   `gol.py --method=shape --shape=double-u`  
   `gol.py --method=shape --shape=r-pentomino`  
   `gol.py --method=shape --shape=f`  
   `gol.py --method=shape --shape=line`  
   `gol.py --method=shape --shape=file`  
-  There are several different pre-defined shapes to initialize the grid with. However, the most interesting option is "file", as it lets you load a shape from a .cells file (as often used in the [Life Wiki](http://www.conwaylife.com/wiki/Main_Page)).
+There are several different pre-defined shapes to initialize the grid with. However, the most interesting option is "file", as it lets you load a shape from a .cells file (as often used in the [Life Wiki](http://www.conwaylife.com/wiki/Main_Page)).
 
 * __shapefile__  
   `gol.py --method=shape --shape=file --shapefile=cells/p28glidershuttle.cells`  
-  This option lets you define a .cells file to load for grid initialization. There are some .cells files in the "cells" subfolder, but you can also write your own (they're plain text) or get more from the [Life Wiki](http://www.conwaylife.com/wiki/Main_Page).
+This option lets you define a .cells file to load for grid initialization. There are some .cells files in the "cells" subfolder, but you can also write your own (they're plain text) or get more from the [Life Wiki](http://www.conwaylife.com/wiki/Main_Page).
+
+
+## Examples
+Here are some example calls that lead to interesting results:
+
+* `python gol.py --method=shape --shape=file --shapefile=cells/smiley.cells --rules 1357/1357`  
+A copy world that produces reappearing smileys.
+
+* `python gol.py --method=checkerboard --resolution=201 80`  
+An evolving picture frame.
+
+* `python gol.py --seed=69 --threshold=0.0005 --rules 1357/1357`  
+Fireworks in a copyworld.
+
+* `python gol.py --seed=69 --threshold=0.1`  
+Chaotic stuff that kind of stabilizes after around 300 evaluations.
