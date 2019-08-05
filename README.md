@@ -81,7 +81,7 @@ This option lets you define a file to load for grid initialization. There are so
 Here are some example calls that lead to interesting results:
 
 * `python gol.py --method=shape --shape=file --shapefile=cells/smiley.cells --rules 1357/1357`  
-A copy world that produces reappearing smileys.
+A copyworld that produces reappearing smileys.
 
 * `python gol.py --method=checkerboard --resolution=201 80`  
 An evolving picture frame.
