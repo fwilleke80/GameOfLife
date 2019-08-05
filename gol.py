@@ -343,12 +343,7 @@ class GameOfLife:
             time.sleep(self.sleepTime)
 
     @staticmethod
-    def load_shape_data(filename):
-        """Load shape data from ASCII file
-        """
-        if not os.path.isfile(filename):
-            raise IOError('A file called ' + filename + ' does not exist!')
-
+    def load_file_plaintext(filename):
         try:
             with open(filename, 'rb') as dataFile:
                 lines = dataFile.readlines()
@@ -361,6 +356,60 @@ class GameOfLife:
         return resultLines
 
     @staticmethod
+    def load_file_rle(filename):
+        """Load shape data from RLE (Run Length Encoded) file
+        """
+        try:
+            with open(filename, 'rb') as dataFile:
+                lines = dataFile.readlines()
+        except:
+            print('Error reason from file ' + filename)
+            lines = []
+
+        for line in lines:
+            # Skip comment lines
+            if line.startswith('#'):
+                continue
+
+            # Parse meta line
+            elif ',' in line:
+                # Break up line
+                width, height, rule = line.split(',')
+
+                # Parse width and height
+                width = int(width.split('=')[1].strip())
+                height = int(height.split('=')[1].strip())
+
+                # Parse rule
+                r1, r2 = rule.split('=')[1].strip().lower().split('/')
+                if r1.startswith('b'):
+                    rule, ruleSurvive, ruleBirth = GameOfLife.parse_ruleset(r2[1:] + '/' + r1[1:])
+                else:
+                    rule, ruleSurvive, ruleBirth = GameOfLife.parse_ruleset(r1[1:] + '/' + r2[1:])
+                
+                continue
+
+            # Parse cells
+            else:
+                # TO DO
+                pass
+
+    @staticmethod
+    def load_shape_data(filename):
+        """Load shape data from ASCII file
+        """
+        if not os.path.isfile(filename):
+            raise IOError('A file called ' + filename + ' does not exist!')
+
+        fileExtension = os.path.splitext(filename)[1].lower()
+        if fileExtension == '.cells':
+            return GameOfLife.load_file_plaintext(filename)
+        elif fileExtension == '.rle':
+            return GameOfLife.load_file_rle(filename)
+
+        return []
+
+    @staticmethod
     def new_grid(width, height, defaultValue=False):
         return [False] * width * height
 
@@ -368,7 +417,7 @@ class GameOfLife:
     def parse_ruleset(ruleSetString):
         ruleSet = ruleSetString.lower()
 
-        # Catch specially named rule sets
+        # Cathc specially named rule sets
         if ruleSet == 'original':
             ruleSet = '23/3'
         elif ruleSet == 'copyworld':
