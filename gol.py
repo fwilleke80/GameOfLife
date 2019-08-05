@@ -343,12 +343,7 @@ class GameOfLife:
             time.sleep(self.sleepTime)
 
     @staticmethod
-    def load_shape_data(filename):
-        """Load shape data from ASCII file
-        """
-        if not os.path.isfile(filename):
-            raise IOError('A file called ' + filename + ' does not exist!')
-
+    def load_file_plaintext(filename):
         try:
             with open(filename, 'rb') as dataFile:
                 lines = dataFile.readlines()
@@ -356,8 +351,112 @@ class GameOfLife:
             print('Error reason from file ' + filename)
             lines = []
 
-        resultLines = [line.lower() for line in lines if (
+        resultLines = [line.lower().strip(' \n\t') for line in lines if (
             len(line) > 0 and line.lower()[0] in 'o.')]
+        return resultLines
+
+    @staticmethod
+    def load_file_rle(filename):
+        """Load shape data from RLE (Run Length Encoded) file
+        """
+        try:
+            with open(filename, 'rb') as dataFile:
+                lines = dataFile.readlines()
+        except:
+            print('Error reason from file ' + filename)
+            lines = []
+
+        rawPattern = ''
+        dataDict = {
+            'name' : '',
+            'author': '',
+            'width': 0,
+            'height': 0,
+            'rule': {},
+            'comments' : []
+        }
+
+        for line in lines:
+            # Parse or comment lines
+            if line.startswith('#'):
+                if line.upper().startswith('#N'):
+                    # Pattern name
+                    dataDict['name'] = line.lstrip('#N ').strip(' \n\r\t')
+                elif line.upper().startswith('#C'):
+                    # Pattern comments
+                    dataDict['comments'].append(line.lstrip('#Cc ').strip(' \n\r\t'))
+                elif line.upper().startswith('#O'):
+                    # Pattern author
+                    dataDict['author'] = line.lstrip('#Oo ').strip(' \n\r\t')
+                continue
+
+            # Parse meta line
+            elif ',' in line:
+                # Break up line
+                width, height, rule = line.split(',')
+
+                # Parse width and height
+                width = int(width.split('=')[1].strip())
+                height = int(height.split('=')[1].strip())
+
+                # Parse rule
+                r1, r2 = rule.split('=')[1].strip().lower().split('/')
+                if r1.startswith('b'):
+                    _, ruleSurvive, ruleBirth = GameOfLife.parse_ruleset(r2[1:] + '/' + r1[1:])
+                else:
+                    _, ruleSurvive, ruleBirth = GameOfLife.parse_ruleset(r1[1:] + '/' + r2[1:])
+                
+                dataDict['width'] = width
+                dataDict['height'] = height
+                dataDict['rule'] = { 'birth': ruleBirth, 'survive': ruleSurvive }
+
+                continue
+
+            # Collect cell data
+            else:
+                rawPattern += line.strip(' \n\r\t')
+                
+        # Now parse collected cell data
+        patternRows = rawPattern.rstrip('!').split('$')
+        resultLines = []
+        for lineIndex, row in enumerate(patternRows):
+            tmpStr = ''
+            resultLines.append('')
+            for c in row:
+                if c.isdigit():
+                    tmpStr += c
+                else:
+                    if tmpStr == '':
+                        numCells = 1
+                    else:
+                        numCells = int(tmpStr)
+                    for _ in range(numCells):
+                        if c == 'b':
+                            resultLines[lineIndex] = resultLines[lineIndex] + '.'
+                        else:
+                            resultLines[lineIndex] = resultLines[lineIndex] + 'o'
+                    tmpStr = ''
+        
+        dataDict['cells'] = resultLines
+
+        return dataDict
+
+    @staticmethod
+    def load_shape_data(filename):
+        """Load shape data from ASCII file
+        """
+        if not os.path.isfile(filename):
+            raise IOError('A file called ' + filename + ' does not exist!')
+
+        resultLines = []
+
+        fileExtension = os.path.splitext(filename)[1].lower()
+        if fileExtension == '.cells':
+            resultLines = GameOfLife.load_file_plaintext(filename)
+        elif fileExtension == '.rle':
+            resultData = GameOfLife.load_file_rle(filename)
+            resultLines = resultData['cells']
+
         return resultLines
 
     @staticmethod
