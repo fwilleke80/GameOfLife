@@ -50,7 +50,7 @@ This determines the method of grid initialization. Default is "random".
 
 * __seed__  
   `gol.py --method=random --seed=12345`  
-The random seed affects the distribution of alive cells. When using the same seed as before, the same initial distribution will occur. A seed value of "0" will use a random seed value, so the distribution will be unique every time.
+The random seed affects the distribution of alive cells in random initialization. When using the same seed as before, the same initial distribution will occur. A seed value of "0" will use a random seed value, so the distribution will be unique every time.
 
 * __threshold__  
   `gol.py --method=random --threshold=0.1`  
