@@ -66,8 +66,15 @@ There are several different pre-defined shapes to initialize the grid with. Howe
 
 * __shapefile__  
   `gol.py --method=shape --shape=file --shapefile=cells/p28glidershuttle.cells`  
-This option lets you define a .cells file to load for grid initialization. There are some .cells files in the "cells" subfolder, but you can also write your own (they're plain text) or get more from the [Life Wiki](http://www.conwaylife.com/wiki/Main_Page).
+This option lets you define a file to load for grid initialization. There are some example files in the "cells" subfolder, but you can also write your own, or get more from the [Life Wiki](http://www.conwaylife.com/wiki/Main_Page).
 
+  Supported file formats are:
+  * __.cells__  
+    A straight-forward plain-text format that anybody can just write.
+
+  * __.rle__  
+    A run length encoded file format that is often used for cell patterns.  
+    It is often used for larget and more complex patterns, and is the most commonly used file format on the [Life Wiki](http://www.conwaylife.com/wiki/Main_Page).
 
 ## Examples
 Here are some example calls that lead to interesting results:
