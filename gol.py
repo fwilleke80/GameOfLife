@@ -467,7 +467,7 @@ class GameOfLife:
     def parse_ruleset(ruleSetString):
         ruleSet = ruleSetString.lower()
 
-        # Cathc specially named rule sets
+        # Catch specially named rule sets
         if ruleSet == 'original':
             ruleSet = '23/3'
         elif ruleSet == 'copyworld':
