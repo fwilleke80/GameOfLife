@@ -14,6 +14,8 @@ It has all been written in just a short time, as a test. It's using only python 
 The easiest way to run the Game of Life is by typing:  
 `python gol.py`
 
+While the game is running, you can always press CTRL+C to cancel.
+
 There are, however, several command line options to change what happens:
 ### General Command line options
 * __rules__  
