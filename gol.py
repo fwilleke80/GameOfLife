@@ -351,7 +351,7 @@ class GameOfLife:
             print('Error reason from file ' + filename)
             lines = []
 
-        resultLines = [line.lower() for line in lines if (
+        resultLines = [line.lower().strip(' \n\t') for line in lines if (
             len(line) > 0 and line.lower()[0] in 'o.')]
         return resultLines
 
@@ -366,9 +366,28 @@ class GameOfLife:
             print('Error reason from file ' + filename)
             lines = []
 
+        rawPattern = ''
+        dataDict = {
+            'name' : '',
+            'author': '',
+            'width': 0,
+            'height': 0,
+            'rule': {},
+            'comments' : []
+        }
+
         for line in lines:
-            # Skip comment lines
+            # Parse or comment lines
             if line.startswith('#'):
+                if line.upper().startswith('#N'):
+                    # Pattern name
+                    dataDict['name'] = line.lstrip('#N ').strip(' \n\r\t')
+                elif line.upper().startswith('#C'):
+                    # Pattern comments
+                    dataDict['comments'].append(line.lstrip('#Cc ').strip(' \n\r\t'))
+                elif line.upper().startswith('#O'):
+                    # Pattern author
+                    dataDict['author'] = line.lstrip('#Oo ').strip(' \n\r\t')
                 continue
 
             # Parse meta line
@@ -383,16 +402,44 @@ class GameOfLife:
                 # Parse rule
                 r1, r2 = rule.split('=')[1].strip().lower().split('/')
                 if r1.startswith('b'):
-                    rule, ruleSurvive, ruleBirth = GameOfLife.parse_ruleset(r2[1:] + '/' + r1[1:])
+                    _, ruleSurvive, ruleBirth = GameOfLife.parse_ruleset(r2[1:] + '/' + r1[1:])
                 else:
-                    rule, ruleSurvive, ruleBirth = GameOfLife.parse_ruleset(r1[1:] + '/' + r2[1:])
+                    _, ruleSurvive, ruleBirth = GameOfLife.parse_ruleset(r1[1:] + '/' + r2[1:])
                 
+                dataDict['width'] = width
+                dataDict['height'] = height
+                dataDict['rule'] = { 'birth': ruleBirth, 'survive': ruleSurvive }
+
                 continue
 
-            # Parse cells
+            # Collect cell data
             else:
-                # TO DO
-                pass
+                rawPattern += line.strip(' \n\r\t')
+                
+        # Now parse collected cell data
+        patternRows = rawPattern.rstrip('!').split('$')
+        resultLines = []
+        for lineIndex, row in enumerate(patternRows):
+            tmpStr = ''
+            resultLines.append('')
+            for c in row:
+                if c.isdigit():
+                    tmpStr += c
+                else:
+                    if tmpStr == '':
+                        numCells = 1
+                    else:
+                        numCells = int(tmpStr)
+                    for _ in range(numCells):
+                        if c == 'b':
+                            resultLines[lineIndex] = resultLines[lineIndex] + '.'
+                        else:
+                            resultLines[lineIndex] = resultLines[lineIndex] + 'o'
+                    tmpStr = ''
+        
+        dataDict['cells'] = resultLines
+
+        return dataDict
 
     @staticmethod
     def load_shape_data(filename):
@@ -401,13 +448,16 @@ class GameOfLife:
         if not os.path.isfile(filename):
             raise IOError('A file called ' + filename + ' does not exist!')
 
+        resultLines = []
+
         fileExtension = os.path.splitext(filename)[1].lower()
         if fileExtension == '.cells':
-            return GameOfLife.load_file_plaintext(filename)
+            resultLines = GameOfLife.load_file_plaintext(filename)
         elif fileExtension == '.rle':
-            return GameOfLife.load_file_rle(filename)
+            resultData = GameOfLife.load_file_rle(filename)
+            resultLines = resultData['cells']
 
-        return []
+        return resultLines
 
     @staticmethod
     def new_grid(width, height, defaultValue=False):
