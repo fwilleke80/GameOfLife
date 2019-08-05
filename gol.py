@@ -409,8 +409,6 @@ def setup_options():
                         help='Grid resolution', default=(DEFAULT_GRID_WIDTH, DEFAULT_GRID_HEIGHT), metavar='WIDTH HEIGHT')
     optGroup.add_option('--fps', type='int', dest='fps',
                         help='Frames per second', default=DEFAULT_FPS)
-    optGroup.add_option('--interval', type='int',
-                        dest='interval', help='Pause every n generations', default=0)
     optGroup.add_option('--step', type='int',
                         dest='step', help='Pause every n generations', default=0)
     optGroup.add_option('--wrap', action='store_true', dest='wrap',
