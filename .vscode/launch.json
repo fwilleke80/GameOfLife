@@ -17,7 +17,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/gol.py",
             "console": "integratedTerminal",
-            "args": ["--method", "shape", "--shape", "file", "--shapefile", "cells/tetradecathlon.cells"]
+            "args": ["--method", "shape", "--shape", "file", "--shapefile", "cells/gosperglidergun.rle"]
         },
         {
             "name": "Python: Rules test",
@@ -25,7 +25,15 @@
             "request": "launch",
             "program": "${workspaceFolder}/gol.py",
             "console": "integratedTerminal",
-            "args": ["--rules", "1357/1357", "--threshold", "0.0001"]
+            "args": ["--rules", "1357/1357", "--threshold", "0.001"]
+        },
+        {
+            "name": "Python: Rules test 2",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/gol.py",
+            "console": "integratedTerminal",
+            "args": ["--rules", "original", "--threshold", "0.1"]
         }
     ]
 }
