@@ -7,8 +7,8 @@ import platform
 PLATFORM = platform.system().upper()
 
 # Defauls
-DEFAULT_GRID_WIDTH = 120
-DEFAULT_GRID_HEIGHT = 50
+DEFAULT_GRID_WIDTH = 80
+DEFAULT_GRID_HEIGHT = 30
 DEFAULT_FPS = 25
 
 # Other constants
@@ -41,7 +41,7 @@ class GameOfLife:
         self.ruleSetValSurvive = ''
         self.ruleSetValBirth = ''
 
-    def init(self, settings):
+    def init(self, settings: dict):
         """Get settings from dictionary, initialize grid
         """
         self.initMethod = settings['initmethod']
@@ -68,7 +68,7 @@ class GameOfLife:
 # Conversion
 ########################################################
 
-    def coord_to_index(self, coord):
+    def coord_to_index(self, coord: tuple[int, int]) -> int:
         """Convert XY coordinates to a grid index
         """
         x, y = coord
@@ -76,7 +76,7 @@ class GameOfLife:
         y = y % self.gridHeight
         return self.gridWidth * y + x
 
-    def index_to_coord(self, i):
+    def index_to_coord(self, i: int) -> tuple[int, int]:
         """Convert a grid index to XY coordinates
         """
         return (i % self.gridWidth, i / self.gridWidth)
@@ -85,7 +85,7 @@ class GameOfLife:
 # Get / Set
 ########################################################
 
-    def get_cell(self, coord):
+    def get_cell(self, coord: tuple[int, int]) -> bool:
         """Get the value of a cell
         """
         if self.wrap:
@@ -95,7 +95,7 @@ class GameOfLife:
                 return self.grid[self.coord_to_index(coord)]
             return False
 
-    def get_cell_changed(self, coord):
+    def get_cell_changed(self, coord: tuple[int, int]) -> bool:
         """Look up if the value of a cell has changed in the last advance() call
         """
         if self.wrap:
@@ -105,7 +105,7 @@ class GameOfLife:
                 return self.changeGrid[self.coord_to_index(coord)]
             return False
 
-    def set_cell(self, coord, value):
+    def set_cell(self, coord: tuple[int, int], value: bool):
         """Set value of a cell
         """
         if self.is_inside_grid(coord) or self.wrap:
@@ -133,7 +133,7 @@ class GameOfLife:
                 else:
                     self.grid[tIndex] = False
 
-    def draw_shape(self, coord, shape, drawDeadFiledata=True):
+    def draw_shape(self, coord: tuple[int, int], shape: str, drawDeadFiledata: bool=True):
         x, y = coord
         # Double-U
         if shape == 'double-u':
@@ -190,8 +190,8 @@ class GameOfLife:
         # Load shape from file
         elif shape == 'file':
             shapeData = GameOfLife.load_shape_data(self.shapeFilename)
-            offsetX = len(shapeData[0]) / 2
-            offsetY = len(shapeData) / 2
+            offsetX = int(len(shapeData[0]) / 2)
+            offsetY = int(len(shapeData) / 2)
             for target_y, shapeLine in enumerate(shapeData):
                 for target_x, char in enumerate(shapeLine):
                     if char == 'o':
@@ -204,9 +204,9 @@ class GameOfLife:
         """Put double U shape in center of grid
         """
         self.draw_shape(
-            (self.gridWidth / 2, self.gridHeight / 2), self.fillshape)
+            (int(self.gridWidth / 2), int(self.gridHeight / 2)), self.fillshape)
 
-    def fill_grid_checkerboard(self, size=1):
+    def fill_grid_checkerboard(self, size: int=1):
         """Fill grid with small checkers
         """
         for y in range(0, self.gridHeight):
@@ -224,7 +224,7 @@ class GameOfLife:
 # Evaluation
 ########################################################
 
-    def is_inside_grid(self, coord):
+    def is_inside_grid(self, coord: tuple[int, int]) -> bool:
         """Return True if given coordinates are within the grid
         """
         x, y = coord
@@ -233,7 +233,7 @@ class GameOfLife:
             return False
         return True
 
-    def count_alive_neighbors(self, coord):
+    def count_alive_neighbors(self, coord: tuple[int, int]) -> int:
         """Count living neighbor cells of given cell
         """
         # Unpack coordinates
@@ -259,7 +259,7 @@ class GameOfLife:
             aliveNeighbors += 1
         return aliveNeighbors
 
-    def check_cell(self, coord):
+    def check_cell(self, coord: tuple[int, int]) -> bool:
         """Check a cell against the rules, return True if
         it should be alive and False if it should be dead
         """
@@ -272,7 +272,7 @@ class GameOfLife:
                 return True
         return False
 
-    def count_alive(self):
+    def count_alive(self) -> int:
         """Count all living cells on the grid
         """
         alive = 0
@@ -343,7 +343,7 @@ class GameOfLife:
             time.sleep(self.sleepTime)
 
     @staticmethod
-    def load_file_plaintext(filename):
+    def load_file_plaintext(filename: str) -> list[str]:
         try:
             with open(filename, 'rb') as dataFile:
                 lines = dataFile.readlines()
@@ -351,12 +351,16 @@ class GameOfLife:
             print('Error reason from file ' + filename)
             lines = []
 
-        resultLines = [line.lower().strip(' \n\t') for line in lines if (
-            len(line) > 0 and line.lower()[0] in 'o.')]
+        resultLines = []
+        for line in lines:
+            line = line.decode().lower()
+            if len(line) > 0 and line[0] in 'o.':
+                resultLines.append(line)
+
         return resultLines
 
     @staticmethod
-    def load_file_rle(filename):
+    def load_file_rle(filename: str) -> dict:
         """Load shape data from RLE (Run Length Encoded) file
         """
         try:
@@ -377,6 +381,7 @@ class GameOfLife:
         }
 
         for line in lines:
+            line = line.decode()
             # Parse or comment lines
             if line.startswith('#'):
                 if line.upper().startswith('#N'):
@@ -442,7 +447,7 @@ class GameOfLife:
         return dataDict
 
     @staticmethod
-    def load_shape_data(filename):
+    def load_shape_data(filename: str) -> list[str]:
         """Load shape data from ASCII file
         """
         if not os.path.isfile(filename):
@@ -460,11 +465,11 @@ class GameOfLife:
         return resultLines
 
     @staticmethod
-    def new_grid(width, height, defaultValue=False):
-        return [False] * width * height
+    def new_grid(width: int, height: int, defaultValue: bool=False) -> list[bool]:
+        return [defaultValue] * width * height
 
     @staticmethod
-    def parse_ruleset(ruleSetString):
+    def parse_ruleset(ruleSetString: str) -> tuple:
         ruleSet = ruleSetString.lower()
 
         # Catch specially named rule sets
@@ -511,7 +516,7 @@ def setup_options():
     optGroup.add_option('--step', type='int',
                         dest='step', help='Pause every n generations', default=0)
     optGroup.add_option('--wrap', action='store_true', dest='wrap',
-                        help='Set to for torodial space', default=False)
+                        help='Set for torodial space', default=False)
     parser.add_option_group(optGroup)
     optGroup = optparse.OptionGroup(
         parser, 'Fill options', 'Options for grid initialization')
@@ -540,7 +545,7 @@ def main():
     print('Game of Life')
     print('\nSettings:')
     print(str(optionsDict))
-    _ = raw_input(
+    _ = input(
         'Press ENTER to start the Game of Life!\nPress CTRL+C to cancel!')
 
     # Play
